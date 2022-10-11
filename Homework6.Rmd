@@ -70,11 +70,12 @@ Write out interpretations for the following coefficients in the model:
 - slope for age
 
 **Answer:**
-we expect a professor to get an average evaluation score of 3.5934345 when his beauty rating, age, class size, and proportion of class who completed the evaluation are equal to 0
+we estimate a professor will get an average evaluation score of 3.5934345 when his beauty rating, age, class size, and proportion of class who completed the evaluation are equal to 0
 
-for each aditional 1 unit increase in average beauty rating, we expect the estimated professor evaluation score to increase by 0.0489457 on average
+for each additional 1 unit increase in average beauty rating, we expect the estimated professor evaluation score to increase by 0.0489457 on average holding age, class size, and proportion of class that completed the survey constant
 
-for each additional year older the professor is, we expect the professor evaluation score to decrease by 0.0024375 on average
+for each additional year older the professor is, we expect the professor evaluation score to decrease by 0.0024375 on average holding average beauty rating, class size, and proportion of class that completed the survey constant
+
 
 ## part c
 
@@ -181,9 +182,9 @@ Interpret the confidence interval for the **class size** from part a.  Based on 
 
 **Answer:** 
 
-Interpretation for **class size**: We are 80% confident that the true class size slope is between 0.0001101363 and 0.001020059
+Interpretation for **class size**: We are 80% confident that the true class size slope is between 0.0001101363 and 0.001020059. I do believe that the slope for class size is significantly different from 0.
 
-Explanation: Yes, we reject the null that the true slope for class size is equal to 0 at 20% level because 0 is not in our 80% confidence interval. The p-value is 0.111606, supporting the claim at the 20% level becuase 0.111606 < 0.20
+Explanation: Yes, we reject the null that the true slope for class size is equal to 0 at 20% level because 0 is not in our 80% confidence interval. The p-value is 0.111606, supporting the claim at the 20% level because 0.111606 < 0.20
 
 ## part c
 
@@ -210,7 +211,7 @@ abs(0.0151026  - 0.08278874) - abs(0.0340600000 - 0.09865066) # new length -  ol
  0.08278874 - 0.03462335
 ```
 
-**Answer:** The new center value is 0.00154774 greater than the old center value previously calculated and similarly, the spread is larger than what was previously calculated by 0.00309548. The old and new confidence intervals have an overlap of 0.04816539 from (0.08278874 - 0.03462335)
+**Answer:** The new center value is 0.00154774 greater than the old center value previously calculated and similarly, the spread is larger than what was previously calculated by 0.00309548. The old and new confidence intervals have an overlap of 0.04816539 from (0.03462335 - 0.08278874). Overall, these confidence interval are very similar to each other.
 
 ## part e
 
@@ -221,7 +222,7 @@ For the inference to be valid, four assumptions need to be met.  We can check th
 plot(lm1)
 ```
 
-**Answer:** I would say that the constant variance of errors assumption is not reasonably met as the error bars seem to become smaller at larger fitted values, the linear relationship between x and y assumption is not met because the residuals at fitted values are not centered around 0 as represented by the red line. The normality of errors assumption is not met as shown by the observations that fall below the diagonal at high and low theoretical quantile values.
+**Answer:** I would say that the constant variance of errors assumption is not reasonably met as the error bars seem to become smaller at larger fitted values, the linear relationship between x and y assumption is not met because the residuals at fitted values are not centered around 0 as represented by the red line, and lastly, the normality of errors assumption is not met as shown by the observations that fall below the diagonal at high and low theoretical quantile values.
 
 ***
 
