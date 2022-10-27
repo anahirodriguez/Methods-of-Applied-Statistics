@@ -1,0 +1,509 @@
+---
+title: "Homework 7"
+author: "Anahi Rodriguez"
+date: "Due 10/26/2022"
+output: pdf_document
+---
+
+# Homework Instructions
+
+**Make sure to add your name to the header of the document.  When submitting the assignment on Gradescope, be sure to assign the appropriate pages of your submission to each Exercise.**
+
+The point value for each exercise is noted in the exercise title. 
+
+For questions that require code, please create or use the code chunk directly below the question and type your code there.  Your knitted pdf will then show both the code and the output, so that we can assess your understanding and award any partial credit.  
+
+For written questions, please provide your answer after the indicated *Answer* prompt.
+
+You are encouraged to knit your file as you work, to check that your coding and formatting are done so appropriately.  This will also help you identify and locate any errors more easily.
+
+# Homework Setup 
+
+We'll use the following packages for this homework assignment.  We'll also read in data from a csv file.  To access the data, you'll want to download the dataset from Canvas, and place it in the same folder as this R Markdown document.  You'll then be able to use the following code to load in the data.  
+
+```{r libraryload}
+library(ggplot2)
+library(MASS)
+```
+
+***
+
+# Exercise 1: Hockey Goalies [20 points]
+
+We will use the data stored in `goalies.csv`, which contains career data for 462 players in the National Hockey League who played goaltender at some point up to and including the 2014-2015 season.  The variables in this dataset are:
+
+- `W` - Wins
+- `GA` - Goals Against
+- `SA` - Shots Against
+- `SV` - Saves
+- `SV_PCT` - Save Percentage
+- `GAA` - Goals Against Average
+- `SO` - Shutouts
+- `MIN` - Minutes
+- `PIM` - Penalties in Minutes
+
+## part a
+
+Read in the data.  Then fit the following multiple linear regression model in `R`.  Save the model to a name and run a summary of the model.  
+
+$$Y_i = \beta_0 + \beta_1x_{i1}+\beta_2x_{i2}+\beta_3x_{i3} + \epsilon_i$$.
+
+Here,
+
+- $Y_i$ is `W` (Wins)
+- $x_{i1}$ is `GAA` (Goals Against Average)
+- $x_{i2}$ is `SV_PCT` (Save Percentage)
+- $x_{i3}$ is `MIN` (Minutes)
+
+```{r exercise1a}
+# Use this code chunk for your answer.
+setwd("~/Desktop/data")
+goalies = read.csv("goalies.csv")
+
+lm1 = lm(W ~ GAA + SV_PCT + MIN, data = goalies)
+summary(lm1)
+```
+
+## part b
+
+Use an F-test to test the significance of the regression.  
+
+Report the following:
+
+- The null and alternative hypotheses
+- The value of the test statistic
+- The *p*-value of the test
+- A statistical decision at $\alpha = 0.01$
+
+```{r exercise1b}
+# Use this code chunk for you answer, as needed.
+intercept_model = lm(W ~ 1, data = goalies)
+anova(intercept_model, lm1)
+```
+
+**Answer:**
+$H_0$ : $\beta_{GGA}$ = $\beta_{SVPCT}$ = $\beta_{MIN}$  = 0 
+for the model wins = $\beta_0$ + $\beta_{GGA}$ + $\beta_{SVPCT}$ + $\beta_{MIN}$
+
+$H_a$ : at least one of $\beta_{GGA}$,  $\beta_{SVPCT}$, or $\beta_{MIN}$ 
+does not equal 0 for the model mentioned in null
+
+Test statistic: 5854.7
+
+P-value: <2.2 * 10^-16
+
+I would reject the null at the 1% level because there is sufficient evidence to suggest that at least one of the slope coefficients is not equal to 0 as (2.2 * 10^-16) < 0.01
+
+## part c
+
+Consider this statement: "Since the F-test result gives a very low p-value, then we can conclude that knowing the goals against average, save percentage, and minutes of an NHL goalie allows you to make a highly accurate prediction of that goalie's wins."  Do you think this is a good conclusion to draw, or not?  Explain your answer.
+
+**Answer:**
+
+I do believe that this is a good conclusion because from our anova test, we know that there is sufficient evidence that at least some of these variables are important for making a prediction, so we choose the larger model over the intercept only model. Additionally, the multiple R^2 value for the larger model is quite high at  97.46%. Although it seems that none of these variables is statistically significant on their own from the p-value associated with the t-test for each slope coefficient, collectively, these variables are good predictors.
+
+## part d
+
+Use your model to predict the number of `Wins` for famous NHL goalie Tony Esposito, who has 2.93 Goals Against Average, 0.906 Save Percentage, and 52476 Minutes.  
+
+```{r exercise1d}
+# Use this code chunk for your answer.
+predict(lm1, data.frame('GAA' = 2.93, 'SV_PCT' = 0.906, 
+                        'MIN' = 52476))
+
+```
+
+**Answer:** 415.9203 
+
+## part e
+
+Point estimates may have some error, so let's instead create an interval for wins that should contain the true wins of a goalie with these stats 90% of the time.
+
+Create (and print) an interval to estimate the wins of a goalie with Tony Esposito's stats with 90% confidence.
+
+```{r exercise1e}
+# Use this code chunk for your answer.
+predict(lm1, data.frame('GAA' = 2.93, 'SV_PCT' = 0.906, 
+                        'MIN' = 52476), 
+        interval = 'prediction',
+        level = 0.9)
+
+```
+
+## part f
+
+Calculate the standard deviation $s_y$ for the observed values of the Wins variable.  Report the value of $s_e$ from your multiple regression model.
+
+Briefly interpret what each measure represents.
+
+Do these two measures together communicate anything about the strength of this model?  *Hint: think about how each of these values is related to our SS terms from the semester.*
+
+```{r exercise1f}
+# Use this code chunk for your answer.
+s_y = sd(goalies$W)
+s_y
+
+sst = (s_y)^2 * (dim(goalies)[1]) # 463 = 464 - 1
+
+summary(lm1)
+s_e = 16.67
+s_e
+
+mse = s_e^2
+mse
+
+sse = mse * 458 # 458 = n - p
+sse
+
+ 1- sse/sst
+```
+
+**Answer:** The standard deviation of y tells us that typically, people will win between 104.2342 more or less games than the games won average value and the standard error of the regression itself is a estimated measure of the amount of standard deviation in our true errors. These two measures can be used to calculate the values of sst and sse which we can then use to calculate R^2 which attests to the models strength.
+
+
+
+***
+
+# Exercise 2: Hockey Goalies, Testing [15 points]
+
+We will consider four models, each with Wins as the response.  The predictors for these models are:
+
+- Model 1: Goals Against, Saves
+- Model 2: Shots Against, Minutes, Shutouts 
+- Model 3: Goals Against, Saves, Shots Against, Minutes, Shutouts
+- Model 4: All Available Variables
+
+## part a
+
+An F-test allows us to compare two models.  An F-test will not provide interpretable results for one set of two models.  Which set is it?
+
+**Answer:** Model 1 and Model 2 becuase neither is a nested model of the other
+
+## part b
+
+Use an F-test to compare Models 2 and 3.  Report the following:
+
+- The null hypothesis (you can write this in words or symbols)
+- The value of the test statistic
+- The *p*-value of the test
+- A statistical decision at $\alpha = 0.01$
+- Your model preference (given this test result).
+
+```{r exercise2b}
+# Use this code chunk for your answer.
+model_2 = lm(data = goalies,
+             W ~ SA + MIN + SO)
+model_3 = lm(data = goalies,
+             W ~ SA + MIN + SO + SV + GA)  
+
+anova(model_2, model_3)
+  
+```
+
+**Answer:**
+$H_0$ : $\beta_{SV}$ = $\beta_{GA}$ = 0 
+for the model wins = $\beta_0$ + $\beta_{SA}$ + $\beta_{MIN}$ + $\beta_{SO}$ + $\beta_{SV}$ + $\beta_{GA}$
+
+
+$H_a$ : at least one of $\beta_{SV}$ or $\beta_{GA}$  does not equal 0 for the model mentioned in null
+
+test statistic: 35.124
+
+p-value: 6.496 * 10^-15
+
+I would reject the null at the 1% level because the p-value is less than 0.01. I would prefer the larger model, model 3, given this test result.
+
+
+## part c
+
+Use a *t*-test to test if the variable Minutes (`MIN`) has a linear relationship with Wins after accounting for all other predictors in the dataset.  In other words, test $H_0: \beta_{`MIN`} = 0$ vs. $H_1: \beta_{`MIN`} \neq 0$ for a specific model (which model is it?).  Report the following:
+
+- The value of the test statistic
+- The *p*-value of the test
+- A statistical decision at $\alpha = 0.05$
+
+```{r exercise2c}
+# Use this code chunk for your answer.
+model_t_test = lm(data = goalies,
+                  W ~ GA + SA + SV + SV_PCT + GAA + SO + MIN + PIM)
+summary(model_t_test)
+
+```
+
+**Answer:**
+test stat: 13.867 
+p-value: < 2e-16
+I would reject the null at the 1% level because "< 2e-16" is less than 0.01 and conclude that there is enough evidence to suggest that the minute variable is useful to predict the number of wins
+
+***
+
+# Exercise 3: Model Selection by Hand [10 points]
+
+Using the goalies dataset, we'll perform model selection by hand.  We would like to choose a model to predict the number of wins from the other variables in the dataset.
+
+## part a
+
+We'll perform model selection in this exercise "by hand".  That means you should not use the `step` function in `R` for this exercise; if you do, you will not receive credit.  We will use a backward searching process and will use the coefficient *p*-values to determine which variables to remove from the model, with an $\alpha$ of **0.01**.
+
+Show the starting model and any subsequent models fit during your searching process here.  
+
+```{r exercise3a}
+# Use this code chunk for your answer.
+summary(model_t_test)
+
+step1 = lm(data = goalies,
+           W ~ GA + SA + SV + SO + MIN + PIM + SV_PCT)
+summary(step1)
+
+step2 = lm(data = goalies,
+           W ~ GA + SA + SV + SO + MIN + PIM)
+summary(step2)
+
+step3 = lm(data = goalies,
+           W ~ GA + SA + SV + MIN + PIM)
+summary(step3)
+
+```
+
+## part b
+
+Report the predictor variables included in your selected model from part a.  
+
+**Answer:** GA, SA, SV, MIN, PIM
+
+## part c
+
+Report the fitted model for your selected model.
+
+**Answer:** estimated wins = -2.0198636 - (0.1359994 * GA) + (0.0512308 * SA) - 
+(0.0581577 * SV) +  (0.0148741 * MIN) + (0.0426871 + PIM)
+
+***
+
+# Exercise 4: Chick-fil-A Searching Methods [25 points]
+
+For this exercise, we'll analyze the nutritional value of menu items from Chick-fil-A, a fast food restaurant specializing in chicken sandwiches.  This data is contained in the chickfila.csv file on Canvas.  
+
+We'll be interested in fitting a model to predict the Calories in a menu item from the other nutritional characteristics of that menu item.
+
+## part a
+
+Read in the chickfila.csv data file.  How many models predicting the number of Calories in a menu item are possible from this dataset?  (Consider only first-order terms, which means include all of the variables once and exactly as they appear in the dataset.)
+
+```{r exercise4a}
+# Use this code chunk for your answer, as needed.
+setwd("~/Desktop/data")
+cfa = read.csv("chickfila.csv")
+
+2^10
+
+```
+
+**Answer:** 1024
+
+## part b
+
+Perform model selection, using BIC as the metric and backward searching.
+
+Report the predictor variables selected for the final model.  No need to report the fitted coefficients.
+
+```{r exercise4b}
+# Use this code chunk for your answer.
+
+start_model = lm(Calories ~ Fat + SatFat + TransFat + Cholesterol + 
+                   Sodium + Carbs + Fiber + Sugar + Protein + Serving,
+                 data = cfa)
+
+step(data = cfa, 
+     object = start_model ,
+     direction = 'backward', k = log(290))
+
+
+```
+
+**Answer:** Fat, SatFat, Sodium, Carbs, Fiber, Protein, Serving
+
+## part c
+
+Perform model selection, using BIC as the metric and forward searching.
+
+Report the predictor variables selected for the model after the first step and for the final model.  No need to report the fitted coefficients.
+
+```{r exercise4c}
+# Use this code chunk for your answer.
+step(data = cfa,
+     object = lm(Calories ~ 1, data = cfa),
+     scope = Calories ~ Fat  + SatFat + TransFat + Cholesterol + 
+             Sodium + Carbs + Fiber + Sugar + Protein + Serving,
+     direction = 'forward',
+     k = log(290))
+```
+
+**Answer:**
+After the first step, the added predictor is Fat and after the last step, the predictors are Fat, Carbs, Protein, Sugar, Serving, SatFat, Fiber, and Sodium
+
+
+## part d
+
+Perform model selection, using BIC as the metric and stepwise searching.  
+
+Report the predictor variables selected for the final model.  No need to report the fitted coefficients.  Do you select the same models using backward, forward, and stepwise searching?
+
+```{r exercise4d}
+# Use this code chunk for your answer.
+step(data = cfa,
+     object = lm(Calories ~ 1, data = cfa),
+     scope = Calories ~ Fat  + SatFat + TransFat + Cholesterol + 
+            Sodium + Carbs + Fiber + Sugar + Protein + Serving,
+     direction = 'both',
+     k = log(290))
+```
+
+**Answer:**
+The final model contains the following predictor variables: Fat, Carbs, Protein, Serving, SatFat, Fiber, and Sodium. The stepwise search and the backward search result in the same model whereas the forward search results in a model with one additional predictor variable, Sugar
+
+## part e
+
+Report the BIC for the final model(s) selected with the three searching methods.  Based on the BIC, which model would you select overall?
+
+```{r exercise4e}
+# Use this code chunk for your answer, if needed.
+```
+
+**Answer:**
+backward: 1453.02, 
+forward: 1456.14, 
+stepwise: 1453.02, 
+
+I would choose the backward/stepwise model as they are the same with the overall lower BIC value compared to the forward search final model
+
+
+# Exercise 5: Comparing Chick-Fil-A Model Metrics [25 points]
+
+For this exercise, we'll continue analyzing the chickfila dataset but now using an exhaustive searching method to identify our optimal model.
+
+## part a
+
+First, run the exhaustive searching function.  What variables are included in the optimal model with 3 predictor variables?  What metric is used to determine the optimal model at each p?  Do the optimal models at each p result in nested models for the chickfila data?
+
+```{r exercise5a}
+# Use this code chunk for your ansswer.
+library(leaps)
+all_calories_model = summary(regsubsets(Calories ~ Fat + SatFat + TransFat + Cholesterol + Sodium
+                   + Carbs + Fiber + Sugar + Protein + Serving, data = cfa))
+all_calories_model
+
+
+
+
+```
+
+**Answer:** The optimal model with 3 predictors contains Fat, Carbs, and protein
+
+R^2 is used to determine between models
+
+
+and yes these could be nested models of a model using all the variables to predict calories
+
+## part b
+
+Calculate the AIC for each of the models selected in part a.  Based on AIC, which predictor variables should be included in the optimal model?  
+
+```{r exercise5b}
+# Use this code chunk for your answer.
+model1 = lm(data = cfa, 
+            Calories ~ Fat)
+model2 = lm(data = cfa, 
+            Calories ~ Fat + Carbs)
+model3 = lm(data = cfa, 
+            Calories ~ Fat + Carbs + Protein)
+model4 = lm(data = cfa,
+            Calories ~ Fat + Carbs + Sugar + Protein)
+model5 = lm(data = cfa,
+            Calories ~ Fat + SatFat + Carbs + Fiber + Protein)
+model6 = lm(data = cfa,
+            Calories ~ Fat + SatFat + Carbs + Fiber + Protein + Serving)
+model7 = lm(data = cfa, Calories ~ Fat + SatFat  + 
+                Sodium + Carbs + Fiber + Protein + Serving)
+model8 = lm(data = cfa, 
+            Calories ~ Fat + SatFat + Sodium + Carbs + Fiber + Sugar + Protein + Serving)
+
+
+extractAIC(model1)
+extractAIC(model2)
+extractAIC(model3)
+extractAIC(model4)
+extractAIC(model5)
+extractAIC(model6)
+extractAIC(model7)
+extractAIC(model8)
+
+```
+
+**Answer:** Fat, SatFat, Sodium, Carbs, Fiber, Sugar, Protein, Serving
+
+## part c
+
+Calculate the BIC for each of the models selected in part a.  Based on BIC, which predictor variables should be included in the optimal model?  Does this match any of the models selected in Exercise 4?
+
+```{r exercise5c}
+# Use this code chunk for your answer.
+extractAIC(model1, k = log(290))
+extractAIC(model2, k = log(290))
+extractAIC(model3, k = log(290))
+extractAIC(model4, k = log(290))
+extractAIC(model5, k = log(290))
+extractAIC(model6, k = log(290))
+extractAIC(model7, k = log(290))
+extractAIC(model8, k = log(290))
+
+```
+
+**Answer:** Fat, SatFat, Sodium, Carbs, Fiber, Protein, Serving. This is the same as the stepwise and backward search selected models
+
+## part d
+
+Calculate the adjusted $R^2$ for each of the models selected in part a.  Based on the adjusted $R^2$, which predictor variables should be included in the optimal model?
+
+```{r exercise5d}
+#Use this code chunk for your answer.
+all_calories_model$adjr2
+```
+
+**Answer:** Fat, SatFat, Sodium, Carbs, Fiber, Sugar, Protein, Serving
+
+## part e
+
+Calculate the RMSE for each of the models selected in part a.  Based on the RMSE, which predictor variables should be included in the optimal model?
+
+```{r exercise5e}
+# Use this code chunk for your answer.
+sqrt((1/290) * all_calories_model$rss)
+```
+
+**Answer:** Fat, SatFat, Sodium, Carbs, Fiber, Sugar, Protein, Serving
+
+## part f
+
+Are the same models selected for each of parts b through e?  How many different models are selected from the different metrics but with the same exhaustive searching method?
+
+**Answer:** No, there are two models selected fro parts b through e. Model 8 is selected when using AIC, Adjusted R^2, and RMSE while model 7 is selected when using BIC
+
+## part g
+
+For which of the metrics used in parts b through e is the comparison of models unfair?  In other words, which metric would you not want to use in this situation?
+
+**Answer:** RMSE
+
+***
+
+# Exercise 6: Formatting [5 points]
+
+The last five points of the assignment will be earned for properly formatting your final document.  Check that you have:
+
+- included your name on the document
+- properly assigned pages to exercises on Gradescope
+- selected **page 1 (with your name)** and this page for this exercise (Exercise 6)
+- all code is printed and readable for each question
+- all output is printed
+- generated a pdf file
