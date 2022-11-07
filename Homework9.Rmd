@@ -1,0 +1,353 @@
+---
+title: "Homework 9"
+author: "Anahi Rodrigueez"
+date: "Due 11/7/2022"
+output: pdf_document
+---
+
+# Homework Instructions
+
+**Make sure to add your name to the header of the document.  When submitting the assignment on Gradescope, be sure to assign the appropriate pages of your submission to each Exercise.**
+
+The point value for each exercise is noted in the exercise title. 
+
+For questions that require code, please create or use the code chunk directly below the question and type your code there.  Your knitted pdf will then show both the code and the output, so that we can assess your understanding and award any partial credit.  
+
+For written questions, please provide your answer after the indicated *Answer* prompt.
+
+You are encouraged to knit your file as you work, to check that your coding and formatting are done so appropriately.  This will also help you identify and locate any errors more easily.
+
+# Homework Setup 
+
+We'll use the following packages for this homework assignment.  We'll also read in data from a csv file.  To access the data, you'll want to download the dataset from Canvas, and place it in the same folder as this R Markdown document.  You'll then be able to use the following code to load in the data.  
+
+```{r libraryload}
+library(ggplot2)
+library(leaps)
+library(faraway)
+```
+
+***
+
+# Exercise 1: Hospital SUPPORT Data [25 points]
+
+For this exercise, we will use the data stored in `hospital.csv` on Canvas.  It contains a random sample of 580 seriously ill hospitalized patients from a famous study called "SUPPORT" (Study to Understand Prognoses Preferences Outcomes and Risks of Treatment).  As the name suggests, the purpose of the study was to determine what factors affected or predicted outcomes, such as how long a patient remained in the hospital.  The variables in the dataset are:
+
+- `Days` - Day to death or hospital discharge
+- `Age` - Age on day of hospital admission
+- `Sex` - Female or male
+- `Comorbidity` - Patient diagnosed with more than one chronic disease
+- `EdYears` - Years of education
+- `Education` - Education level; high or low
+- `Income` - Income level; high or low
+- `Charges` - Hospital charges, in dollars
+- `Care` - Level of care required; high or low
+- `Race` - Non-white or white
+- `Pressure` - Blood pressure, in mmHg
+- `Blood` - White blood cell count, in gm/dL
+- `Rate` - Heart rate, in bpm
+
+## part a
+
+For this part, first fit an additive multiple regression model (that is, one without any interaction terms) predicting `Charges` from `Age`, `EdYears`, `Pressure`, `Days`, and `Care`.  Report the summary of this model.
+
+```{r exercise1a}
+# Use this code chunk for your answer.
+setwd("~/Desktop/data")
+hospital = read.csv("hospital.csv")
+
+lm1 = lm(Charges ~ Age + EdYears + Pressure + Days + Care,
+         data = hospital)
+summary(lm1)
+
+summary(lm1$residuals)
+
+
+```
+
+## part b
+
+Provide an interpretation for the intercept, the slope coefficient fitted for the `Days` variable, and the slope coefficient fittted for the `Care` variable.
+
+**Answer:**
+Intercept: I expect an average estimated charge of 44960.90 dollars when an individual who is 0 years old with no education and a blood pressure of 0 stays in the hospital for 0 days to death or hospital discharge and requires a high level of care.
+
+
+Days: For each additional day to death or hospital discharge an individual stays, given that they require a high level of care, I expect the estimated charge to increase by 2132.40 dollars on average, holding age, education, and blood pressure constant
+
+
+Care: I expect individuals who require a low level of care to owe an estimated 42472.90 less than those who require a high level of care, holding age, education, blood pressure, and day to death or hospital discharges in hospital constant
+
+## part c
+
+What is the largest and the smallest residual from this model?  From the summary of the model, does it seem like the distribution of residuals is roughly symmetric?
+
+**Answer:** the smallest residual is -177021 and the largest is 435820. From the output, it does not seem that the distribution of residuals is roughly symetric as many more , and larger, positive residuals exist comapred to negative residuals.
+
+## part d
+
+Generate the default plots in `R`.  Then, interpret each of these plots.
+
+```{r exericse1d}
+# Use this code chunk for your answer.
+plot(lm1)
+```
+
+**Answer:** The residuals vs fitted plot tells us that our errors likely do not have constant variance, but that the relationship between y and xs is likely linear. The qq-plot tells us that our errors are likely not distributed normally as we see many observations at either end deviating from the dashed line. The scale-location plot tells us, as the residuals vs fitted values plot did, that our errors are likely not homoskedastic as our red line is not flat but instead has a positive slope. And lastly, the residuals vs leverage plot tells us that we likely have few unsual observations that we should take a look at, specifically 53, 58, and 368.
+
+***
+
+# Exercise 2: Model Selection in Hospital Support Data [25 points]
+
+## part a
+
+Fit a multiple regression model with `Charges` as the response.  Use the main effects of `Age`, `EdYears`, `Pressure`, and `Days`, along with all second, third, and fourth order interaction terms.  For this model, you will not use the `Care` variable that you used in Exercise 1.  Report the summary of this model.  How many coefficients are included in this model?  How many of these coefficients are significantly different from 0?
+
+```{r exercise2a}
+# Use this code chunk for your answer.
+lm2 = lm(Charges ~ Age * EdYears * Pressure * Days,
+         data = hospital)
+
+```
+
+**Answer:** There are 16 coefficients included in this model and none of them are statistically diffeent than 0 at even the 10% level
+
+## part b
+
+Perform model selection using a forward searching mechanism, BIC as the metric, and the full interaction model from part a as your the scope of the searching.  Make sure to define `n` in your code before using the model searching method.
+
+```{r exercise2b}
+# Use this code chunk for your answer.
+null_model = lm(Charges ~ 1, data = hospital)
+n = 580
+bic_measure = step(null_model, scope = Charges ~ Age * EdYears * Pressure * Days,
+                   direction = 'forward', k = log(n))
+
+final_model = lm(Charges ~ Days + EdYears + Pressure + Age + Days:Pressure,
+                 data = hospital)
+summary(final_model)
+```
+
+## part c
+
+Report the predictor variables for the model chosen after the first step.  
+
+**Answer:** day to death or hospital discharges
+
+## part d 
+
+Report the final fitted model chosen by model selection; write out the full fitted model with all coefficients.
+
+**Answer:** Estimated Charges = 13191.669 + (3575.876 * Days) + (1689.961 * EdYears) + (7.306 * Pressure) + (-401.751 * Age) + (-11.558 * Days * Pressure)
+
+## part e
+
+The final model selected in part d should have a total of six coefficients, including the intercept.  Interpret the two coefficients pertaining to `Days`.  Then, calculate the slopes for `Days` for an individual whose `Pressure` is 115 and again for an individual whose `Pressure` is 67.
+
+```{r exercise2e}
+# Use this code chunk for your answer.
+
+3575.876 + (-11.558 * 67) + (7.306 * 67)
+3575.876 + (-11.558 * 115) + (7.306 * 115)
+```
+
+**Answer:** 
+Days interpretation: For each additional day to death or hospital discharge, I expect the estimated charge to increase by 3575.876 dollars on average, holding education, blood pressure, and age constant
+
+Days * Pressure interpretation: For each additional day to death or hospital discharge, holding pressure constant, I expect the estimated charge to decrease by 11.558 dollars on average, holding education and age constant
+
+
+The slope for days for an individual whos pressure is 67, is 3290.992
+
+
+The slope for days for an individual whos pressure is 115, is 3086.896
+
+
+## part f
+
+Suppose that we meant to use a backward searching mechanism for part d.  Without actually running any code, what would be the variable removed from the model in the first step?
+
+**Answer:** The interaction between age and days
+
+***
+
+# Exercise 3: Hospital SUPPORT Data: Unusual Observations [20 points]
+
+We'll continue exploring the hospitals dataset in this question.  We'll use a model with `Charges` as the response, and with predictors of `Days`, `EdYears`, `Pressure`, `Age`, and the interaction of `Days` with `Pressure`.
+
+## part a
+
+Calculate the leverages for each observation in the dataset.  Print only those leverages that are above the threshold defined in the lecture.  After looking through these leverages by eye, the leverages for what specific observations, if any, appear to be especially large?  Make a histogram of all leverages for the dataset.
+
+```{r exercise3a}
+# Use this code chunk for your answer.
+hatvalues = hatvalues(final_model)
+
+hatvalues[hatvalues > (2 * 6/580)]
+
+# big leverage = 10, 141, 204, 205, 224, 249, 257, 327, 402, 479
+# biggest leverage = 191, 402, 252, 224
+
+hist(hatvalues[hatvalues > (2 * 6/580)])
+```
+
+**Answer:** 
+The following observation have a large leverage: 10, 141, 204, 205, 224, 249, 257, 327, 402, 479 while observations 191, 402, 252, and 224 have the largest leverages
+
+## part b
+
+Calculate the standardized residuals for each observation in the dataset.  Generate a histogram of all standardized residuals for the dataset.  Then, print only those standardized residuals that have a magnitude greater than 2.  What observations, if any, were identified as having both a large leverage in part a and as having a high standardized residual in this part?  Did you define any of these observations as having an especially large leverage?
+
+```{r exercise3b}
+# Use this code chunk for your answer.
+print(rstandard(final_model)[rstandard(final_model) > 2])
+
+hist(rstandard(final_model))
+
+
+
+```
+
+**Answer:** observations 26 and 204 were identified as having both a large leverage and a high standard residual
+
+## part c
+
+Calculate the Cook's distance for each observation in the dataset.  Print only those observations that are above the threshold defined in lecture.  After looking through these Cook's distances by eye, the Cook's distance for what specific observations, if any, appear to be especially large?  Finally, what is Cook's distance used to measure?
+
+```{r exercise3c}
+# Use this code chunk for your answer.
+cooks.distance(final_model)[cooks.distance(final_model) > (4/580)]
+```
+
+**Answer:** The cooks distance or observation 191 and 368 appear to be especially large. Cook's distnace is used to meausre how influential a point is
+
+## part d
+
+In order to assess the fit of this model, calculate the value of the RMSE using leave one out cross validation.
+
+```{r exercise3d}
+# Use this code chunk for your answer.
+sqrt(sum(final_model$residuals ^2)/580)
+```
+
+***
+
+# Exercise 4: Scottish Hill Races [25 points]
+
+For this last exercise, we'll use the `races.table` dataset that includes information on record-winning times for 35 hill races in Scotland, as reported by Atkinson (1986).  The additional variables record the overall distance travelled and the height climbed in the race.  Below, we are reading in the data from an online source.  We do correct one error reported by Atkinson before beginning our analysis.  
+
+Source: Atkinson, A. C. (1986). Comment: Aspects of diagnostic regression analysis (discussion of paper by Chatterjee and Hadi). *Statistical Science*, **1**, 397-402.
+
+```{r exercise4starter}
+url = 'http://www.statsci.org/data/general/hills.txt' 
+races.table = read.table(url, header=TRUE, sep='\t')
+races.table[18,4] = 18.65
+head(races.table)
+```
+
+## part a
+
+Create a scatterplot matrix of the quantitative variables contained in the `race.table` dataset.  Interpret this scatterplot matrix.  What variable do you think will be more important in predicting the record time of that race?
+
+```{r exercise4a}
+# Use this code chunk for your answer.
+
+for_matrix1 = races.table[,2:4]
+
+pairs(for_matrix1)
+```
+
+**Answer:**  It appears that climb  has a positive relationship with both distane and time and similalrly, distance also has a postive relationship with time. I believe that distance will be more important to predict the record time of a race.
+
+## part b
+
+Fit a multiple regression model predicting the record time of a race from the distance travelled, the height climbed, and an interaction of the two variables.  Report the summary of the model.  What is the $R^2$ for this model?  What does this suggest about the strength of the model?
+
+```{r exercise4b}
+# Use this code chunk for your answer.
+lm3 = lm (Time ~ Distance * Climb, data = races.table)
+summary(lm3)
+```
+
+**Answer:** the R-square of this model is 0.9806, indicating that this model is very strong 
+
+## part c
+
+Identify any influential points as defined in the lecture.  Which of these observations, if any, are especially influential based on their values?  For these influential points, do they have high leverage, high standardized residual, both, or neither?
+
+```{r exercise4c}
+# Use this code chunk for your answer.
+cooks.distance(lm3)[cooks.distance(lm3) > (4/35)]
+# 7, 11, 35
+
+hatvalues(lm3)[hatvalues(lm3) > (8/35)]
+
+(rstandard(lm3)[rstandard(lm3) > 2])
+```
+
+**Answer:** 
+Observations 7, 11, and 35 are influential with 7 being especially influential. Observations 7, 11, and 35 all have high leverage. And observatons 7 and 11 have a large standardized residuals.
+
+## part d
+
+Refit the model from part b without any points that you identified as influential.  Note: this is not something that we should automatically do, but we will do it for now as a demonstration of how much our model may be affected by these points!  Print the coefficients for this model.  How do they compare to the coefficients from the model in part b?
+
+*Hint: Create a subset of your data that only includes those points that are not influential before fitting your data.*
+
+```{r exercise4d}
+# Use this code chunk for your answer.
+
+remove_obs = races.table[-c(7, 11, 35),]
+
+lm4 = lm(Time ~ Distance * Climb, data = remove_obs)
+summary(lm4)
+
+```
+
+**Answer:** All of the coefficients change a lot compared to part b with the exception of the interaction not changing too much
+
+## part e
+
+How much does this updated model affect our actual predictions for the response?  Let's create a scatterplot that compares our fitted values from our original model to those from our newer model (influential points removed).  
+
+Calculate and save each of the fitted values (for the original model and for the newer model) to their own named object in `R`.  Note: If you are using the `predict` function, you can supply as an argument `newdata = races.table` since we will use all of the variables and all of the data.
+
+Then, create a dataframe in `R` by providing your two named objects with fitted values as two arguments inside the `data.frame` function, and save the result to a new named object in `R`.
+
+Now, create a scatterplot to compare the fitted values for each model.  Include an appropriate title and axes labels.  All other formatting is optional and up to you!
+
+*It might be helpful to add a line with intercept 0 and slope 1 to represent what perfect matching would look like.*
+
+Finally, briefly comment on what this plot reveals.  Would you say there are big differences in the predictions made by each model, or would you say the predictions by each model are quite similar?  Is this what you would expect from the results in part c?
+
+```{r exercise4e}
+# Use this code chunk for your answer.
+old_fitted = predict(lm3, newdata = races.table)
+
+new_fitted = predict(lm4, newdata = races.table)
+
+
+df = data.frame(old_fitted, new_fitted)
+
+plot(df$old_fitted)
+plot(df$new_fitted)
+
+# HOW?
+  
+
+```
+
+**Answer:**
+
+***
+
+# Exercise 5: Formatting [5 points]
+
+The last five points of the assignment will be earned for properly formatting your final document.  Check that you have:
+
+- included your name on the document
+- properly assigned pages to exercises on Gradescope
+- selected **page 1 (with your name)** and this page for this exercise (Exercise 5)
+- all code is printed and readable for each question
+- all output is printed
+- generated a pdf file
