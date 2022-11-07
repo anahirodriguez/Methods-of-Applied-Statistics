@@ -1,0 +1,104 @@
+---
+title: "STAT420 Final Project"
+author: "Jocelyn Xu, Anahi Rodriguez"
+date: "Due 11/4/2022"
+output: pdf_document
+---
+
+# Final Project
+
+```{r libraryload}
+library(ggplot2)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Set Up
+
+```{r anahi_load_in, include = F}
+# setwd("~/Downloads")
+# immo = read.csv('apartments.csv')
+
+```
+
+```{r loaddata}
+immo = read.csv("apartments.csv")
+head(immo)
+dim(immo)
+```
+## Histogram and summary on response variable
+
+```{r response variable}
+immo$totalRentNoHigh = with(immo, ifelse(immo$totalRent < 1000, immo$totalRent, NA))
+
+# original summary and histogram for response variable before trimming
+summary(immo$totalRent)
+hist(immo$totalRent)
+sd(immo$totalRent)
+
+# original summary and histogram for response variable after trimming
+summary(immo$totalRentNoHigh)
+hist(immo$totalRentNoHigh)
+sd(immo$totalRentNoHigh, na.rm = T)
+```
+
+**Answer:**  
+Response variable of interest: total rent  
+
+Explanation on taking off the high end:  
+With the high end, It is very hard to tell the shape of the histogram because of the wide range and the lack of data on the high end. Although we do lose nearly 30% of the date doing this, we chose the threshold <1000 because the distribution is closer to a normal distribution and has a lower overall variance.
+
+Interpretation on histogram:  
+The histogram shows the spread of the total rent in Germany. Overall, the histogram is right-skewed, with a center around mid 500s and the range from 0 to 975 with a cutting threshold or 0 to 2110 without a cutting threshold.  
+
+## Scatterplots on quantitative predictors
+```{r response variable and quantitative predictor}
+library(ggplot2)
+library(tidyverse)
+
+for_matrices = immo %>%
+  select(noRooms, totalRentNoHigh, pricetrend)
+
+pairs(for_matrices)
+
+# ggplot(immo, aes(x = noRooms, y = totalRentNoHigh)) + 
+#   geom_point() + 
+#   geom_smooth(method = 'lm', se = F, color = 'purple', formula = 'y ~ x') +
+#   labs(x = "number of rooms", y = "total rent", 
+#     title = "Scatterplot of the relationship between the number of rooms and the total rent")
+# 
+# 
+# ggplot(immo, aes(x = pricetrend, y = totalRentNoHigh)) + 
+#   geom_point() + 
+#   geom_smooth(method = 'lm', se = F, color = 'purple', formula = 'y ~ x') +
+#   labs(x = "price trend", y = "total rent", 
+#     title = "Scatterplot of the relationship between the price trend and the total rent")
+
+
+```
+
+**Answer:**  
+Interpretation:  
+It seems that there is a large variability in the price trend variable when plotted against total rent, however, I still am able to recognize that this is a positive relationship. For the number of rooms plot, I see that there is a much greater variability for two and three bedroom apartments compared to one, four, and five bedroom apartments. Additionally, I see that there exists data for three and a half as well as four and a half bedroom apartments, possibly accounting for some of the missing variability at the higher end that we see around two and three bedrooms. Lastly, the relationship between our predictor variables is hard to identify but it seems that therre exists a weak positive relationship.
+
+
+## Fit a model
+```{r model}
+immo_model = lm(totalRentNoHigh ~ noRooms + pricetrend +balcony + typeOfFlat,
+                data=immo)
+summary(immo_model)
+```
+**Answer:**  
+fitted model: estimated total rent = 188.270 + (91.164 * number of rooms) + (39.653 * price trend) + (53.167 * balcony) + (-63.643 * ground floor flat) + (-76.378 * basemant flat) + (25.036  * other type of flat) + (-217.820 * raised ground floor flat) + (19.521 * roof flat)
+R_square = 0.4407
+
+## Plot the model
+```{r model plot}
+plot(immo_model)
+```
+
+# Project Update Notes: 
+- We have removed out base rent predictor variable and replaced it with a different quantitative variable: price trend
+- We have also trimmed our data
