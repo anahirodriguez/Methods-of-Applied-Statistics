@@ -93,7 +93,7 @@ Generate the default plots in `R`.  Then, interpret each of these plots.
 plot(lm1)
 ```
 
-**Answer:** The residuals vs fitted plot tells us that our errors likely do not have constant variance, but that the relationship between y and xs is likely linear. The qq-plot tells us that our errors are likely not distributed normally as we see many observations at either end deviating from the dashed line. The scale-location plot tells us, as the residuals vs fitted values plot did, that our errors are likely not homoskedastic as our red line is not flat but instead has a positive slope. And lastly, the residuals vs leverage plot tells us that we likely have few unsual observations that we should take a look at, specifically 53, 58, and 368.
+**Answer:** The residuals vs fitted plot tells us that our errors likely do not have constant variance, and that the relationship between y and xs is likely linear but hard to tell definitively: there exists a slight dip but is still relatively linear. The qq-plot tells us that our errors are likely not distributed normally as we see many observations at either end deviating from the dashed line. The scale-location plot tells us, as the residuals vs fitted values plot did, that our errors are likely not homoskedastic as our red line is not flat but instead has a positive slope. And lastly, the residuals vs leverage plot tells us that we likely have few unsual observations that we should take a look at, specifically 53, 58, and 368.
 
 ***
 
@@ -107,6 +107,7 @@ Fit a multiple regression model with `Charges` as the response.  Use the main ef
 # Use this code chunk for your answer.
 lm2 = lm(Charges ~ Age * EdYears * Pressure * Days,
          data = hospital)
+summary(lm2)
 
 ```
 
@@ -147,27 +148,28 @@ The final model selected in part d should have a total of six coefficients, incl
 ```{r exercise2e}
 # Use this code chunk for your answer.
 
-3575.876 + (-11.558 * 67) + (7.306 * 67)
-3575.876 + (-11.558 * 115) + (7.306 * 115)
+# days + days * pressure + pressure
+3575.876 + (-11.558 * 67) 
+3575.876 + (-11.558 * 115) 
 ```
 
 **Answer:** 
 Days interpretation: For each additional day to death or hospital discharge, I expect the estimated charge to increase by 3575.876 dollars on average, holding education, blood pressure, and age constant
 
-Days * Pressure interpretation: For each additional day to death or hospital discharge, holding pressure constant, I expect the estimated charge to decrease by 11.558 dollars on average, holding education and age constant
+Days * Pressure interpretation: For each additional day to death or hospital discharge, for an individual of a certain blood pressure, I expect the estimated modification to the change of average hospital charge to be 11.558 dollars less on average, holding education and age constant
 
 
-The slope for days for an individual whos pressure is 67, is 3290.992
+The slope for days for an individual whos pressure is 67, is  2801.49
 
 
-The slope for days for an individual whos pressure is 115, is 3086.896
+The slope for days for an individual whos pressure is 115, is 2246.706
 
 
 ## part f
 
 Suppose that we meant to use a backward searching mechanism for part d.  Without actually running any code, what would be the variable removed from the model in the first step?
 
-**Answer:** The interaction between age and days
+**Answer:** The interaction between days and pressure
 
 ***
 
@@ -188,7 +190,7 @@ hatvalues[hatvalues > (2 * 6/580)]
 # big leverage = 10, 141, 204, 205, 224, 249, 257, 327, 402, 479
 # biggest leverage = 191, 402, 252, 224
 
-hist(hatvalues[hatvalues > (2 * 6/580)])
+hist(hatvalues)
 ```
 
 **Answer:** 
@@ -200,7 +202,7 @@ Calculate the standardized residuals for each observation in the dataset.  Gener
 
 ```{r exercise3b}
 # Use this code chunk for your answer.
-print(rstandard(final_model)[rstandard(final_model) > 2])
+print(rstandard(final_model)[abs(rstandard(final_model)) > 2])
 
 hist(rstandard(final_model))
 
@@ -208,7 +210,7 @@ hist(rstandard(final_model))
 
 ```
 
-**Answer:** observations 26 and 204 were identified as having both a large leverage and a high standard residual
+**Answer:** observations 26, 141, 191, 204, amd 368 were identified as having both a large leverage and a high standard residual. observations 191 and 368 have exceptionally high values among these points.
 
 ## part c
 
@@ -227,7 +229,9 @@ In order to assess the fit of this model, calculate the value of the RMSE using 
 
 ```{r exercise3d}
 # Use this code chunk for your answer.
-sqrt(sum(final_model$residuals ^2)/580)
+sqrt(mean((resid(final_model)/(1 - hatvalues(final_model))) ^ 2))
+
+
 ```
 
 ***
@@ -282,11 +286,11 @@ cooks.distance(lm3)[cooks.distance(lm3) > (4/35)]
 
 hatvalues(lm3)[hatvalues(lm3) > (8/35)]
 
-(rstandard(lm3)[rstandard(lm3) > 2])
+(rstandard(lm3)[abs(rstandard(lm3)) > 2])
 ```
 
 **Answer:** 
-Observations 7, 11, and 35 are influential with 7 being especially influential. Observations 7, 11, and 35 all have high leverage. And observatons 7 and 11 have a large standardized residuals.
+Observations 7, 11, and 35 are influential with 7 being especially influential. Observations 7, 11, and 35 all have high leverage. And observations 7, 11, and 35 have large standardized residuals.
 
 ## part d
 
@@ -322,22 +326,28 @@ Finally, briefly comment on what this plot reveals.  Would you say there are big
 
 ```{r exercise4e}
 # Use this code chunk for your answer.
-old_fitted = predict(lm3, newdata = races.table)
+old_fitted = fitted(lm3)
+old_fitted = old_fitted[-c(7, 11, 35)]
 
-new_fitted = predict(lm4, newdata = races.table)
+new_fitted = fitted(lm4)
 
 
 df = data.frame(old_fitted, new_fitted)
 
-plot(df$old_fitted)
-plot(df$new_fitted)
+ggplot(df, aes(x = old_fitted, y = new_fitted)) +
+  geom_point() +
+  labs(x = 'Old Fitted Value', y = 'New Fitted Value', 
+       title = 'Comaprison of Fitted Values With and Without Influential Points') +
+  geom_abline(slope = 1, intercept = 0, color = 'Blue')
 
-# HOW?
+
+
+
   
 
 ```
 
-**Answer:**
+**Answer:** I believe that there are not big differences to the predictions made before and after removing the influential points becuase all of the points fall on the line y = x with the exception of one point. This is not what I would expect from the predictions in part c because I would expect the 3 influential points to have a stronger effect on the predictions and estimated regression line.
 
 ***
 
