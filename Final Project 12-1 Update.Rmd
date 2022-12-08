@@ -1,0 +1,95 @@
+---
+title: "STAT420 Final Project"
+author: "Jocelyn Xu, Anahi Rodriguez"
+date: "2022-12-01"
+output: pdf_document
+---
+
+  
+# Final Project
+  
+```{r libraryload}
+library(ggplot2)
+library(MASS)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Set Up
+
+```{r anahi_load_in, include = F}
+# setwd("~/Desktop/data")
+# immo = read.csv('apartments.csv')
+# immo$firingTypes = as.factor(immo$firingTypes)
+
+```
+
+```{r loaddata}
+immo = read.csv("apartments.csv")
+head(immo)
+dim(immo)
+immo$firingTypes = as.factor(immo$firingTypes)
+
+```
+
+
+```{r model_fit}
+fit1 = lm(totalRent ~ noRooms + pricetrend + firingTypes + balcony + serviceCharge, data = immo)
+
+summary(fit1)
+
+```
+
+Interpratation of the number of rooms coefficient: For each additional room an apartment has, I expect the estimated avg total rent to increase by $79.0645, holding firing type, price trend, whether or not it has a balcony, and the service charge constant.
+
+
+Interpretation of firingTypesgas: We expect the apartments of firing type gas to have an avg estimated expected total rent that is 48.6595 less than an apartment with firing type combined heat and power fossil fuels, holding price trend, the number of rooms, whether or not their is a balcony, and service charge constant.
+
+
+The firingType categorical variable contributes 9 to p and has a baseline value of combined heat and power fossil fuels.
+
+
+```{r boxcox}
+boxcox(fit1, plotit = T)
+
+```
+
+
+
+
+The boxcox suggest that it is most reasonable to not transform as the lamda value falls at approximately 0.
+
+
+```{r model2}
+plot(x = immo$totalRent, y = immo$numberOfFloors)
+fit2 = fit1 = lm(totalRent ~ noRooms + pricetrend * livingSpace + firingTypes + balcony + serviceCharge, data = immo)
+
+
+
+summary(fit2)
+```
+We have added an interaction between service charge and and whether or not the apartment has a lift I believe that in the real world, the size of the effect of the price trend would likely depend on the amount of square meters of space.
+We beleive that the price trend would have a larger effect for larger apartments.
+
+
+```{r model backward_selection}
+fit2_AIC_back = step(fit2, direction = 'backward')
+
+```
+
+The model selction above utilizes a backward step searching process with AIC as its metric of comparison between models. From the above output, we see that the final model becomes 
+estiamted totalRent = noRooms + pricetrend + livingSpace + balcony + serviceCharge + pricetrend*livingSpace
+
+
+```{r model_comparison}
+backwards_fit = lm(totalRent ~ noRooms + pricetrend + livingSpace + balcony + serviceCharge + pricetrend:livingSpace, data = immo)
+
+summary(fit2)
+summary(backwards_fit)
+```
+Fit2, the full model before a backwards stepwise search was performed, has an $R^2$ of 0.7756 while the final modle after the backwards search is completed has an $R^2$ value of 0.7586. We expect the smaller nested model to have a lower $R^2$ value becuase it has at least as many predictor variables as the smaller model.
+
+
+

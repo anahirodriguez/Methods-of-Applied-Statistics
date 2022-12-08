@@ -1,0 +1,135 @@
+---
+title: "STAT420 Final Project"
+author: "Jocelyn Xu, Anahi Rodriguez"
+date: "2022-12-01"
+output: pdf_document
+---
+
+  
+# Final Project
+  
+```{r libraryload}
+library(ggplot2)
+library(MASS)
+library(car)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Set Up
+
+```{r anahi_load_in, include = F}
+# setwd("~/Desktop/data")
+# immo = read.csv('apartments.csv')
+# immo$firingTypes = as.factor(immo$firingTypes)
+```
+
+```{r loaddata}
+immo = read.csv("apartments.csv")
+head(immo)
+dim(immo)
+immo$firingTypes = as.factor(immo$firingTypes)
+
+```
+
+
+```{r model_fit}
+fit1 = lm(totalRent ~ noRooms + pricetrend + firingTypes + balcony + serviceCharge, data = immo)
+
+summary(fit1)
+```
+
+Interpratation of the number of rooms coefficient: For each additional room an apartment has, I expect the estimated avg total rent to increase by $79.0645, holding firing type, price trend, whether or not it has a balcony, and the service charge constant.
+
+
+Interpretation of firingTypesgas: We expect the apartments of firing type gas to have an avg estimated expected total rent that is 48.6595 less than an apartment with firing type combined heat and power fossil fuels, holding price trend, the number of rooms, whether or not their is a balcony, and service charge constant.
+
+
+The firingType categorical variable contributes 9 to p and has a baseline value of combined heat and power fossil fuels.
+
+
+```{r boxcox}
+boxcox(fit1, plotit = T)
+
+log_transformed_fit1 = lm(log(totalRent) ~ noRooms + pricetrend + firingTypes + balcony + serviceCharge, data = immo)
+summary(log_transformed_fit1)
+```
+The boxcox plot shows that the most optimal answer would be lamda very close to 0, which means that it is most reasonable to do a natural log transformation.  
+
+I choose to use the log transformation on my response variable for the remainder of the analysis because with the transformation on y, a larger percentage of the variation with the predictor variables can be explained by its linear relationship with y (R^2 becomes larger compared to the normal fit1 model).  
+
+```{r model2}
+plot(x = immo$totalRent, y = immo$numberOfFloors)
+fit2 = lm(log(totalRent) ~ noRooms + pricetrend * livingSpace + firingTypes + balcony + serviceCharge, data = immo)
+
+summary(fit2)
+```
+We have added an interaction between pricetrend and living space for apartments. I believe that in the real world, the size of the effect of the price trend would likely depend on the amount of square meters of space.  
+Also, the R^2 with addition of pricetrend * livingSpace is 79.23%, which is larger than the first model, which is about 68.68%.  
+We believe that the price trend would have a larger effect for larger apartments.  
+
+
+```{r model backward_selection}
+fit2_AIC_back = step(fit2, direction = 'backward')
+```
+
+The model selection above utilizes a backward step searching process with AIC as its metric of comparison between models. From the above output, we see that the final model becomes 
+estimated logged totalRent = noRooms + pricetrend + livingSpace + balcony + serviceCharge 
+
+
+```{r model_comparison}
+backwards_fit = lm(log(totalRent) ~ noRooms + pricetrend + livingSpace + balcony + serviceCharge, data = immo)
+
+summary(fit2)
+summary(backwards_fit)
+```
+Fit2, the full model before a backwards stepwise search was performed, has an $R^2$ of 0.7923 while the final model after the backwards search is completed has an $R^2$ value of 0.7755. We expect the smaller nested model to have a lower $R^2$ value because it has at least as many predictor variables as the smaller model.
+
+```{r model_analysis}
+final_model = lm(log(totalRent) ~ noRooms + pricetrend + livingSpace + balcony + serviceCharge, data = immo)
+summary(final_model)
+
+sd(log(immo$totalRent))
+sd(fitted(final_model))
+
+vif(final_model)
+
+plot(final_model)
+
+RMSE = sqrt(mean((resid(final_model)/(1-hatvalues(final_model)))**2))
+RMSE
+```
+
+Model selection reason: We have chosen this model because it is the winner of our backsearching process. It has the smallest AIC compared to all other possible models given by the fit2 model. Even though the $R^2$ is not the largest we have got so far, $Radj^2$ is the largest - it is more applicable than the multiple R^2 in nested models becuase we should always expect the larger model to have a higher $R^2$, so we look for the larger adjusted $R^2$ value instead.
+
+Fitted model: estimated log(totalRent) = 5.2360786 - 0.0673298(noRooms) + 0.0861699(pricetrend) + 0.0126712(livingspace) + 0.1020454(balconyTrue) + 0.0012940(serviceCharge)  
+
+n=138, p=6  
+
+standard deviation of my y = 0.4966034, estimated standard deviation of the model = 0.4373228. All together I know that my prediction is fairly close to the actual values with some variations from the calculation loss. 
+
+I am NOT concerned about collinearity because none of the vif value from my selected model are greater than 5.  
+
+Assumption check:  
+1. From looking into fitted vs. residuals and scale-location graph, I would not conclude that the equal variance for you at each combination of xs is met because The points are not evenly distributed around e=0 / not necessarily around 1.  
+2. From looking into the QQ plot I want to conclude that true errors are normally distributed are kind of met. Besides the three outliers that are marked with numbers, all other points seem to follow the line.  
+3. From looking into fitted vs. residuals, I would not conclude that the true relationship between xs and y is linear because the line is not very centered at 0 - there are some points on the edge that curve the line.  
+
+From the residuals vs. leverage graph I conclude that there are unusual observations especially to the right end - point 12, 13, and 108 pull the line down to make it curve. Point 13 and 136 are very unusual - 13 appeared in all four graphs and 136 appeared in three of them. I would possibly eliminate them before modeling to meet the assumptions.  
+
+Errors of the model = 0.2471419  
+
+I am not concerned about the model complexity / size of my model. Based on the Rule of Thumb, n = 138 >= 5p = 28 is met. 
+
+```{r statistical_test}
+null_model = lm(log(totalRent) ~ 1, data = immo)
+anova(null_model, fit2)
+```
+significance of regression test  
+H0 = log(totalRent) ~ 1  
+Ha = log(totalRent) ~ noRooms + pricetrend * livingSpace + firingTypes + balcony + serviceCharge  
+F-test statistics = 31.02  
+p-val < 2.2e-16, therefore, there are enough evidence for us to reject H0.  
+Hence, the model including an interaction term is preferred to the null model.

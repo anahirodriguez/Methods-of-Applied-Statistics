@@ -18,40 +18,31 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Data Set Up
 
 ```{r anahi_load_in, include = F}
-# setwd("~/Downloads")
-# immo = read.csv('apartments.csv')
+setwd("~/Desktop/data")
+immo = read.csv('apartments.csv')
 
 ```
 
 ```{r loaddata}
-immo = read.csv("apartments.csv")
-head(immo)
-dim(immo)
+# immo = read.csv("apartments.csv")
+# head(immo)
+# dim(immo)
 ```
 ## Histogram and summary on response variable
 
 ```{r response variable}
-immo$totalRentNoHigh = with(immo, ifelse(immo$totalRent < 1000, immo$totalRent, NA))
-
-# original summary and histogram for response variable before trimming
+# original summary and histogram for response variable 
 summary(immo$totalRent)
 hist(immo$totalRent)
 sd(immo$totalRent)
 
-# original summary and histogram for response variable after trimming
-summary(immo$totalRentNoHigh)
-hist(immo$totalRentNoHigh)
-sd(immo$totalRentNoHigh, na.rm = T)
 ```
 
 **Answer:**  
 Response variable of interest: total rent  
 
-Explanation on taking off the high end:  
-With the high end, It is very hard to tell the shape of the histogram because of the wide range and the lack of data on the high end. Although we do lose nearly 30% of the date doing this, we chose the threshold <1000 because the distribution is closer to a normal distribution and has a lower overall variance.
-
 Interpretation on histogram:  
-The histogram shows the spread of the total rent in Germany. Overall, the histogram is right-skewed, with a center around mid 500s and the range from 0 to 975 with a cutting threshold or 0 to 2110 without a cutting threshold.  
+The histogram shows the spread of the total rent in Germany. Overall, the histogram is right-skewed, with a center around mid 500s and the range from 0 to 2200 with a cutting threshold or 0 to 2110 without a cutting threshold.  
 
 ## Scatterplots on quantitative predictors
 ```{r response variable and quantitative predictor}
@@ -59,7 +50,7 @@ library(ggplot2)
 library(tidyverse)
 
 for_matrices = immo %>%
-  select(noRooms, totalRentNoHigh, pricetrend)
+  select(noRooms, totalRent, pricetrend)
 
 pairs(for_matrices)
 
