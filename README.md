@@ -13,4 +13,4 @@ hw5: Simple linear regression assumption, interpretation, hypothesis testing, er
 
 hw6: Multiple linear regression assumptions, hypothesis testing, and comparison to simple linear regression model
 
-hw7: F-test
+hw7: F-test and Model complexity
