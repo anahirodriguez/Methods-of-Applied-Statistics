@@ -12,3 +12,5 @@ hw4: Simple linear regression intepretation, confidence intervals, and predictio
 hw5: Simple linear regression assumption, interpretation, hypothesis testing, error estimation, and simulating sampling distribution
 
 hw6: Multiple linear regression assumptions, hypothesis testing, and comparison to simple linear regression model
+
+hw7: F-test
